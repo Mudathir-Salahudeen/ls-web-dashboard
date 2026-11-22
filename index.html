@@ -560,7 +560,7 @@ function glyph(kind,x,y,s,fg,bg){const b=0.014,o=[['sr',x,y,s,s,fg]];
  if(kind==='t'){o.push(['r',x,y,s,s*0.3,fg],['l',x+b,y+s*0.65,x+s-b,y+s*0.65,fg],['l',x+s*0.4,y+s*0.3,x+s*0.4,y+s-b,fg])}
  else{o.push(['r',x+s*0.62,y+s*0.16,s*0.18,s*0.18,fg],['l',x+s*0.1,y+s*0.86,x+s*0.4,y+s*0.5,fg],['l',x+s*0.4,y+s*0.5,x+s*0.62,y+s*0.86,fg],['l',x+s*0.52,y+s*0.7,x+s*0.7,y+s*0.55,fg],['l',x+s*0.7,y+s*0.55,x+s*0.92,y+s*0.86,fg])}
  return o}
-function chipDraw(g,c,kind,col,side,q,ly,sz,hh,target){const k=chipG(q,ly,sz,hh,side);g.r(k.x,k.y,k.w,k.h,col);glyph(kind,k.gx,k.gy,k.sq,'FFFFFF',col).forEach(a=>g[a[0]](...a.slice(1)));g.link(k.x,k.y,k.w,k.h,target)}
+function chipDraw(g,c,kind,col,side,q,ly,sz,hh,target){const lab=kind==='t'?'DHIS2 link':'NHMIS link',fs=Math.max(sz*1.1,6.5),w=g.w(lab,fs,1),em=fs/72,y=ly+0.03,x=side==='l'?q.X+0.06:q.X+q.W-0.06-w;g.t(lab,x,y,{sz:fs,b:1,c:col});g.l(x,y+em*0.55,x+w,y+em*0.55,col);g.link(x,y-em*0.75,w,em*1.5,target)}
 function bars(g,q,c){const{X,Y,W,ch,fs}=q;g.sr(X,Y,W,ch,'D9DDE3');const cl=fs(6.8)/72,ty=Y+0.07+fs(9)/72*0.75;
  g.t(c.lab,X+0.1,ty,{sz:fs(9),b:1,c:'404040'});
  const ss=0.07*q.f;let lx=X+W-0.1;if(c.d){lx-=g.w('DHIS2',fs(6.8))+ss+0.05;g.r(lx,ty-ss/2,ss,ss,C2);g.t('DHIS2',lx+ss+0.05,ty,{sz:fs(6.8),c:'595959'});lx-=0.14}
@@ -608,11 +608,8 @@ async function makePptx(S,prog){await lib('https://cdn.jsdelivr.net/npm/pptxgenj
     sl.addChart(P.charts.BAR,ser,{x:q.X+0.03,y:q.Y+to,w:q.W-0.06,h:q.ch-to-0.03,barDir:'col',barGrouping:'clustered',chartColors:c.d?[C1,C2]:[C1],showLegend:false,showTitle:false,showValue:true,dataLabelFontSize:q.fs(6.8),dataLabelFontFace:FONT,dataLabelColor:'404040',dataLabelPosition:'outEnd',dataLabelFormatCode:'#,##0;-#,##0;;',catAxisLabelFontSize:q.fs(6.8),catAxisLabelFontFace:FONT,catAxisLabelColor:'595959',valAxisHidden:true,valGridLine:{style:'none'},catGridLine:{style:'none'},barGapWidthPct:60,valAxisMinVal:0});
     const ly=q.Y+q.ch+0.1+q.nl*q.fs(6.8)*1.5/72,hh=q.fs(6.8)*1.5/72;
     const sz=q.fs(6.8),hq=sz*1.4/72;
-    const pchip=(kind,col,side,link)=>{const k=chipG(q,ly,sz,hq,side);
-     sl.addShape(P.ShapeType.rect,{x:k.x,y:k.y,w:k.w,h:k.h,fill:{color:col},line:{color:col,width:0}});
-     sl.addShape(P.ShapeType.rect,{x:k.gx,y:k.gy,w:k.sq,h:k.sq,fill:{color:col},line:{color:'FFFFFF',width:0.75}});
-     glyph(kind,k.gx,k.gy,k.sq,'FFFFFF',col).slice(1).forEach(a=>{if(a[0]==='r')sl.addShape(P.ShapeType.rect,{x:a[1],y:a[2],w:a[3],h:a[4],fill:{color:a[5]},line:{color:a[5],width:0}});else sl.addShape(P.ShapeType.line,{x:Math.min(a[1],a[3]),y:Math.min(a[2],a[4]),w:Math.abs(a[3]-a[1]),h:Math.abs(a[4]-a[2]),flipV:(a[3]-a[1])*(a[4]-a[2])<0,line:{color:a[5],width:0.75}})});
-     sl.addShape(P.ShapeType.rect,{x:k.x,y:k.y,w:k.w,h:k.h,fill:{color:'FFFFFF',transparency:100},line:{color:'FFFFFF',transparency:100,width:0},hyperlink:link})};
+    const pchip=(kind,col,side,link)=>{const lab=kind==='t'?'DHIS2 link':'NHMIS link',fs=Math.max(sz*1.1,6.5),w=0.9,h=fs*1.5/72,x=side==='l'?q.X+0.06:q.X+q.W-0.06-w;
+     sl.addText([{text:lab,options:{hyperlink:link,bold:true,color:col,underline:{style:'sng'}}}],{x,y:ly+0.03-h/2,w,h,align:side==='l'?'left':'right',valign:'middle',fontFace:FONT,fontSize:fs,margin:0})};
     if(s.dx!=null&&c.d)pchip('t',C2,'l',{slide:s.dx+1,tooltip:'DHIS2 numbers'});
     if(c.img)pchip('i',C1,'r',{url:c.img,tooltip:'NHMIS images'});
     const nt=notes(c,q.W>3.6);sl.addText([{text:nt[0],options:{bold:true,breakLine:true}},{text:nt[1],options:{breakLine:!!nt[2]}}].concat(nt[2]?[{text:nt[2]}]:[]),{x:q.X,y:q.Y+q.ch+0.02,w:q.W,h:q.nh,valign:'top',fontFace:FONT,fontSize:q.fs(6.8),color:'000000',margin:[0,3,0,3]})})}
